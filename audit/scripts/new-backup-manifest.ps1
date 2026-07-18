@@ -25,7 +25,8 @@ foreach ($file in $files) {
     $relative = $file.FullName.Substring($resolved.Length).TrimStart('\') -replace '\\', '/'
     $remote = '/' + $relative
     $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-    $restore = "curl --ssl-reqd --ftp-ssl-control --user `<usuario-ftp`>:`<password`> --upload-file `"$relative`" `"ftps://eagle.hostingplus.cl$remote`""
+    $localRestorePath = '<backup-dir>/' + $relative
+    $restore = "curl --ssl-reqd --ftp-ssl-control --ftp-create-dirs --user `<usuario-ftp`>:`<password`> --upload-file `"$localRestorePath`" `"ftp://eagle.hostingplus.cl:21$remote`""
     $lines.Add("| ``$remote`` | ``$relative`` | $($file.Length) | ``$hash`` | $($file.LastWriteTimeUtc.ToString('o')) | ``$restore`` |")
 }
 

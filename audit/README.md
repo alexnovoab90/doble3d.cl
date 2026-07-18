@@ -21,6 +21,8 @@ Los respaldos descargados se guardan en `audit/backups/<timestamp>/` y también 
 powershell -ExecutionPolicy Bypass -File audit/scripts/new-backup-manifest.ps1 -BackupDir audit/backups/<timestamp>
 ```
 
+Los comandos del manifiesto usan FTPS explícito sobre el puerto 21 y el nombre de servidor que coincide con su certificado. Antes de ejecutar una restauración, se debe reemplazar `<backup-dir>`, `<usuario-ftp>` y `<password>` en un entorno seguro; esos valores nunca se guardan en el repositorio.
+
 Antes de cualquier escritura remota deben existir y validarse:
 
 - copia de `.htaccess`;
@@ -32,4 +34,3 @@ Antes de cualquier escritura remota deben existir y validarse:
 El respaldo de archivos del 18 de julio de 2026 contiene 39 archivos (605.863 bytes). El export SQL todavía no está disponible: por este motivo **toda escritura remota permanece bloqueada**.
 
 No se deben guardar contraseñas, claves de aplicación ni cookies en esta carpeta o en Git.
-
