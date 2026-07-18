@@ -1,20 +1,22 @@
 @echo off
+setlocal
 title n8n - doble3d.cl
-REM Lanzador manual de n8n. Deja esta ventana abierta mientras uses n8n.
-REM La interfaz queda en: http://localhost:5678
 
-set "PATH=C:\nvm4w\nodejs;%APPDATA%\npm;%PATH%"
-
-REM Si ya hay una instancia corriendo, avisar y abrir el navegador
-curl -s -o nul --max-time 3 http://localhost:5678
-if %errorlevel%==0 (
-    echo n8n ya esta corriendo. Abriendo el navegador...
-    start http://localhost:5678
-    timeout /t 5 >nul
-    exit /b
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\healthcheck.ps1" >nul 2>&1
+if errorlevel 1 (
+    echo n8n no responde. Iniciando la tarea programada Doble3D-n8n...
+    powershell.exe -NoProfile -NonInteractive -Command "Start-ScheduledTask -TaskName 'Doble3D-n8n'"
+    if errorlevel 1 (
+        echo No se pudo iniciar Doble3D-n8n. Revisa RUNBOOK.md y los logs.
+        exit /b 1
+    )
+    timeout /t 15 /nobreak >nul
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\healthcheck.ps1"
+    if errorlevel 1 (
+        echo n8n no supero la comprobacion de salud. Revisa logs\n8n.log.
+        exit /b 1
+    )
 )
 
-echo Iniciando n8n... la interfaz estara en http://localhost:5678
-start "" /min cmd /c "timeout /t 15 >nul && start http://localhost:5678"
-n8n start
-pause
+start "" http://localhost:5678
+exit /b 0
