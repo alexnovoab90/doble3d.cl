@@ -17,7 +17,7 @@
 - Mantener un único flujo maestro; las variantes redundantes quedan archivadas y desactivadas.
 - Durante dos semanas, n8n debe crear exclusivamente borradores.
 - La automatización se detiene ante duplicados, temas fuera de nicho, fuentes insuficientes o metadatos inválidos.
-- El workspace no es un repositorio Git. Cada tarea termina con un snapshot fechado; no inicializar Git ni versionar los JSON con secretos durante este alcance.
+- El repositorio Git es exclusivamente local, no tiene remoto y no se hará `push`. Cada tarea termina con commit y snapshot fechado para permitir revisión y reversión.
 - Las acciones remotas de escritura requieren revisión del diff o payload y aprobación inmediatamente antes de ejecutarse.
 
 ## Workstream and Schedule
