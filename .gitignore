@@ -1,7 +1,9 @@
 .worktrees/
 .superpowers/
-audit/backups/
-audit/baseline/
+audit/backups/*
+audit/baseline/*
+!audit/backups/.gitkeep
+!audit/baseline/.gitkeep
 n8n/logs/
 *.log
 
