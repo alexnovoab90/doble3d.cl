@@ -1,0 +1,379 @@
+{
+  "id": "Doble3DJuevesTec1",
+  "name": "Auto Post Doble3D — Jueves (Tech/Industria)",
+  "nodes": [
+    {
+      "id": "a1b2c3d4-0001-4000-8000-trigger00001",
+      "name": "Jueves 11:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -660,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 11 * * 4"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0002-4000-8000-elegirtema01",
+      "name": "Elegir tema",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Temas rotativos del día: se elige según la semana ISO para no repetir seguido.\nconst temas = [\n  {\n    \"label\": \"Tecnología e innovación en minería chilena\",\n    \"query\": \"tecnologia mineria innovacion Chile\"\n  },\n  {\n    \"label\": \"Simulación 3D y gemelos digitales industriales\",\n    \"query\": \"simulacion 3D gemelo digital industria\"\n  },\n  {\n    \"label\": \"Hardware XR: visores, chips y lentes\",\n    \"query\": \"visores realidad virtual chips XR\"\n  },\n  {\n    \"label\": \"Robótica y automatización industrial\",\n    \"query\": \"robotica automatizacion industrial mineria\"\n  },\n  {\n    \"label\": \"Aplicaciones web 3D e interactivas para industria\",\n    \"query\": \"aplicaciones 3D interactivas industria digitalizacion\"\n  },\n  {\n    \"label\": \"Transformación digital en minería\",\n    \"query\": \"transformacion digital mineria\"\n  }\n];\nconst now = new Date();\nconst start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));\nconst week = Math.floor(((now - start) / 86400000 + start.getUTCDay() + 1) / 7);\nconst tema = temas[week % temas.length];\nreturn [{ json: { tema: tema.label, query: tema.query } }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0003-4000-8000-serpernews01",
+      "name": "Noticias (Serper)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -220,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://google.serper.dev/news",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "d0e90250eee2dcc05c62e7e875c1f9bc288d2daf"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ q: $json.query, gl: 'cl', hl: 'es', num: 20 }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0004-4000-8000-preppromp001",
+      "name": "Preparar prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Procesa las noticias de Serper.dev (Google News) y arma la petición para DeepSeek.\nconst items = Array.isArray($json.news) ? $json.news : [];\n\n// Fechas relativas de Serper en español -> días de antigüedad\nconst dias = (txt) => {\n  const t = (txt || '').toLowerCase().trim();\n  let m;\n  if ((m = t.match(/hace\\s+(\\d+)\\s+(minuto|hora)/))) return 0;\n  if ((m = t.match(/hace\\s+(\\d+)\\s+d[ií]a/))) return parseInt(m[1]);\n  if ((m = t.match(/hace\\s+(\\d+)\\s+semana/))) return parseInt(m[1]) * 7;\n  if ((m = t.match(/hace\\s+(\\d+)\\s+(mes|año)/))) return 999;\n  if ((m = t.match(/^(\\d{2})-(\\d{2})-(\\d{4})$/))) { // DD-MM-YYYY\n    const d = new Date(parseInt(m[3]), parseInt(m[2]) - 1, parseInt(m[1]));\n    return Math.floor((Date.now() - d.getTime()) / 86400000);\n  }\n  return 999; // formato desconocido: descartar por seguridad\n};\n\nconst noticias = [];\nfor (const it of items) {\n  if (!it.title || !it.link) continue;\n  const edad = dias(it.date);\n  if (edad > 7) continue; // solo noticias de los últimos 7 días\n  let fuente = it.source || '';\n  try { if (!fuente) fuente = new URL(it.link).hostname.replace(/^www\\./, ''); } catch (e) {}\n  if (!noticias.some(n => n.link === it.link)) {\n    noticias.push({ title: it.title, link: it.link, fuente, fecha: it.date || '', snippet: it.snippet || '' });\n  }\n  if (noticias.length >= 8) break;\n}\n\nconst fecha = new Date().toLocaleDateString('es-CL', { year: 'numeric', month: 'long', day: 'numeric' });\nconst listado = noticias.length\n  ? noticias.map((n, i) => (i + 1) + '. ' + n.title + ' | ' + n.fuente + ' | ' + n.link + (n.fecha ? ' | ' + n.fecha : '') + (n.snippet ? '\\n   Resumen: ' + n.snippet : '')).join('\\n')\n  : '(No hay noticias de los últimos 7 días: escribe un artículo educativo/evergreen sobre el tema, SIN citar fuentes externas ni inventar URLs.)';\n\nconst system = [\n'Eres el redactor senior de contenidos SEO del blog de Doble 3D Studio (doble3d.cl), estudio chileno especializado en: capacitación con realidad virtual para minería e industrias de alto riesgo, videos y animación 3D técnica, realidad aumentada, aplicaciones WebGL, y CORE (plataforma propia de gestión y métricas de entrenamiento inmersivo, integrable a los LMS del cliente). Clientes destacados: Codelco, Minera Centinela, FlyWithUs y FLS (FLSmidth). Diferenciales: desarrollo a medida en Chile, integración con las plataformas que el cliente ya usa (LMS/SCORM) y soporte postventa perpetuo.',\n'',\n'Escribes en español chileno neutro y profesional. Cuando hablas de Doble 3D usas primera persona plural (\"En Doble 3D creemos...\").',\n'',\n'ENLACES INTERNOS disponibles (integra 2 o 3 de forma natural y contextual dentro del cuerpo, con anchor text descriptivo):',\n'- https://doble3d.cl/servicios/realidad-virtual/ (capacitación VR industrial/minería)',\n'- https://doble3d.cl/servicios/animacion-3d/ (videos y animación 3D técnica)',\n'- https://doble3d.cl/servicios/core/ (plataforma CORE)',\n'- https://doble3d.cl/servicios/gamificacion-scorm/ (apps gamificadas SCORM)',\n'- https://doble3d.cl/app-webgl/ (aplicaciones WebGL)',\n'',\n'ESTRUCTURA OBLIGATORIA de content_html (NO incluyas H1, el título va aparte; NO incluyas los bloques de cierre, se agregan automáticamente):',\n'1) Un párrafo inicial de 60 a 90 palabras que resuma la noticia con datos concretos y contenga la focus keyword de forma natural (respuesta directa, optimizada para motores de respuesta/AEO).',\n'2) De 3 a 5 secciones <h2> (al menos dos formuladas como pregunta), con párrafos <p> de 2 a 4 oraciones. Cita cada medio con <a href=\"URL\" target=\"_blank\" rel=\"noopener\">nombre del medio</a>. USA SOLO las URLs de la lista de noticias entregada; está PROHIBIDO inventar URLs externas.',\n'3) Una sección que conecte la noticia con el trabajo de Doble 3D en minería/industria chilena (aporte de valor, sin venta dura).',\n'4) Al final: <h2>Preguntas frecuentes</h2> con exactamente 4 bloques de <h3>(pregunta)</h3> seguido de <p>(respuesta de 40 a 60 palabras, autocontenida, con entidades y cifras)</p>. Las mismas 4 preguntas/respuestas van en el array faq.',\n'',\n'REGLAS SEO (Yoast): focus_keyword long-tail en minúsculas y sin tildes (ej: \"capacitacion realidad virtual mineria\"); la keyword aparece en el primer párrafo, en al menos un H2 y en el slug; meta_title de máximo 60 caracteres comenzando con la keyword o muy cerca del inicio; meta_description de 120 a 155 caracteres con la keyword y un llamado a la acción; slug corto de 3 a 6 palabras; excerpt de 1 a 2 oraciones. Artículo de 800 a 1200 palabras.',\n'',\n'REGLAS AEO/LLMs: respuestas directas y autocontenidas, cifras y datos concretos, nombres completos de empresas y tecnologías, lenguaje declarativo y verificable.',\n'',\n'RESPONDE ÚNICAMENTE un objeto JSON válido con estas claves exactas:',\n'{',\n'  \"titulo\": \"máx 65 caracteres, atractivo, incluye la keyword o parte de ella\",',\n'  \"subtitulo_imagen\": \"máx 60 caracteres, complementa al título sin repetirlo\",',\n'  \"tag_top\": \"etiqueta de categoría para la imagen, máx 30 caracteres, MAYÚSCULAS, ej: CAPACITACIÓN INMERSIVA INDUSTRIAL\",',\n'  \"tag_1\": \"primera entidad clave de la noticia, máx 16 caracteres, ej: CODELCO o QUALCOMM\",',\n'  \"tag_2\": \"segunda entidad o tecnología clave, máx 16 caracteres, ej: AULA 4.0 o 48 TOPS\",',\n'  \"slug\": \"en-minusculas-con-guiones\",',\n'  \"meta_title\": \"máx 60 caracteres\",',\n'  \"meta_description\": \"120 a 155 caracteres\",',\n'  \"focus_keyword\": \"keyword long-tail\",',\n'  \"excerpt\": \"1-2 oraciones\",',\n'  \"categoria\": \"UNA de: Realidad Virtual en minería | Realidad Virtual | Videos 3D Minería | Realidad Mixta | Inteligencia Artificial | Innovación | Tecnología | WebGL en minería\",',\n'  \"tags\": [\"3 a 5 tags en español\"],',\n'  \"content_html\": \"el cuerpo HTML según la estructura\",',\n'  \"faq\": [{\"q\": \"pregunta\", \"a\": \"respuesta en texto plano\"}] // exactamente 4',\n'}'\n].join('\\n');\n\nconst user = 'Fecha de hoy: ' + fecha + '.\\nTema del día: ' + $('Elegir tema').item.json.tema + '.\\n\\nNoticias recientes encontradas (elige la más relevante para el tema y el negocio de Doble 3D; puedes apoyarte en 2 o 3 relacionadas como contexto secundario):\\n\\n' + listado + '\\n\\nEscribe el artículo siguiendo todas las reglas y responde solo el JSON.';\n\nreturn [{ json: {\n  noticiasEncontradas: noticias.length,\n  body: {\n    model: 'deepseek-v4-pro',\n    messages: [ { role: 'system', content: system }, { role: 'user', content: user } ],\n    response_format: { type: 'json_object' },\n    temperature: 0.7,\n    max_tokens: 12000,\n    thinking: { type: 'disabled' },\n  },\n} }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0005-4000-8000-deepseek0001",
+      "name": "DeepSeek (redactar)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.deepseek.com/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer OPENAI_API_KEY_REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 300000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0006-4000-8000-ensamblar001",
+      "name": "Ensamblar post",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Parsea la respuesta de DeepSeek, valida SEO, resuelve tags en WP y arma el post final.\nconst STATUS = 'publish'; // 'publish' = publicación automática | 'draft' = borrador para revisar\nconst WP = 'https://doble3d.cl/wp-json/wp/v2';\nconst AUTH = { Authorization: 'Basic WORDPRESS_APP_PASSWORD_REDACTED' };\n\nconst choice = ($json.choices && $json.choices[0]) || {};\nconst finishReason = choice.finish_reason || '?';\nlet raw = (choice.message && choice.message.content) || '';\nraw = raw.replace(/^\\s*```(?:json)?/i, '').replace(/```\\s*$/i, '').trim();\n// Aislar el objeto JSON por si el modelo añade texto alrededor\nconst ini = raw.indexOf('{'); const fin = raw.lastIndexOf('}');\nif (ini >= 0 && fin > ini) raw = raw.slice(ini, fin + 1);\nlet a;\ntry { a = JSON.parse(raw); } catch (e) {\n  throw new Error('DeepSeek no devolvió JSON válido (finish_reason=' + finishReason + ', ' + raw.length + ' chars). Inicio: ' + raw.slice(0, 200) + ' ... Final: ' + raw.slice(-200));\n}\n\nfor (const k of ['titulo', 'slug', 'meta_title', 'meta_description', 'focus_keyword', 'content_html']) {\n  if (!a[k] || typeof a[k] !== 'string') throw new Error('Falta el campo \"' + k + '\" en la respuesta de DeepSeek');\n}\nif (!Array.isArray(a.faq) || a.faq.length < 3) throw new Error('FAQ incompleta en la respuesta de DeepSeek');\n\nconst trunc = (s, n) => s.length <= n ? s : s.slice(0, n).replace(/\\s+\\S*$/, '');\nconst metaTitle = trunc(a.meta_title.trim(), 60);\nconst metaDesc = trunc(a.meta_description.trim(), 155);\nconst slug = a.slug.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').split('-').slice(0, 8).join('-');\n\nconst CATS = { 'realidad virtual en minería': 14, 'realidad virtual en mineria': 14, 'realidad virtual': 39, 'videos 3d minería': 1, 'videos 3d mineria': 1, 'realidad mixta': 15, 'inteligencia artificial': 32, 'innovación': 61, 'innovacion': 61, 'tecnología': 52, 'tecnologia': 52, 'webgl en minería': 17, 'webgl en mineria': 17 };\nconst catId = CATS[(a.categoria || '').toLowerCase().trim()] || 39;\n\n// Resolver tags: buscar cada uno en WP, crear los que no existan.\nconst tagIds = [];\nfor (const nombre of (a.tags || []).slice(0, 5)) {\n  const name = String(nombre).trim();\n  if (!name) continue;\n  try {\n    const found = await this.helpers.httpRequest({ method: 'GET', url: WP + '/tags', qs: { search: name, per_page: 10 }, headers: AUTH, json: true });\n    const exact = (found || []).find(t => t.name.toLowerCase() === name.toLowerCase());\n    if (exact) { tagIds.push(exact.id); continue; }\n    const created = await this.helpers.httpRequest({ method: 'POST', url: WP + '/tags', body: { name }, headers: AUTH, json: true });\n    if (created && created.id) tagIds.push(created.id);\n  } catch (e) { /* un tag fallido no detiene la publicación */ }\n}\n\n// Schema JSON-LD FAQPage (AEO) a partir del array faq.\nconst clean = (s) => String(s || '').replace(/<[^>]*>/g, '').trim();\nconst faqLd = {\n  '@context': 'https://schema.org',\n  '@type': 'FAQPage',\n  mainEntity: a.faq.slice(0, 6).map(f => ({\n    '@type': 'Question', name: clean(f.q),\n    acceptedAnswer: { '@type': 'Answer', text: clean(f.a) },\n  })),\n};\n\n// Bloques fijos de cierre (enlaces internos + CTA), como en los templates.\nconst bloqueCierre = [\n'<h2>Para profundizar en capacitación VR para minería</h2>',\n'<ul>',\n'<li><a href=\"https://doble3d.cl/servicios/realidad-virtual/\">Realidad virtual industrial para entrenamiento en minería</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/animacion-3d/\">Animación 3D técnica para procesos industriales</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/gamificacion-scorm/\">Apps gamificadas con SCORM para entrenamiento industrial</a></li>',\n'</ul>',\n'<p>En Doble 3D desarrollamos <a href=\"https://doble3d.cl/servicios/realidad-virtual/\">capacitación en realidad virtual</a> para faenas mineras tier-1 como Codelco, Minera Centinela y FlyWithUs, y <a href=\"https://doble3d.cl/servicios/animacion-3d/\">videos 3D para minería</a> para clientes como FLS (FLSmidth). Centraliza y mide tu entrenamiento inmersivo con <a href=\"https://doble3d.cl/servicios/core/\">CORE</a>.</p>',\n'<h2>¿Quieres llevar la capacitación inmersiva industrial a tu operación?</h2>',\n'<p>En Doble 3D Studio diseñamos experiencias inmersivas a medida para minería e industrias de alto riesgo, integradas a las plataformas que ya usas, con soporte postventa perpetuo.</p>',\n'<p>👉 <a href=\"https://wa.me/56958015971\" target=\"_blank\" rel=\"noopener\">Conversemos por WhatsApp</a><br>🌐 <a href=\"https://doble3d.cl/servicios/\">Conoce más</a></p>',\n'<script type=\"application/ld+json\">' + JSON.stringify(faqLd) + '</script>',\n].join('\\n');\n\nconst subt = (a.subtitulo_imagen || a.focus_keyword || '').slice(0, 60);\nconst tagTop = (a.tag_top || 'CAPACITACIÓN INMERSIVA INDUSTRIAL').slice(0, 32);\nconst tag1 = (a.tag_1 || 'DOBLE 3D').slice(0, 18);\nconst tag2 = (a.tag_2 || 'VR INDUSTRIAL').slice(0, 18);\n\nreturn [{ json: {\n  status: STATUS,\n  titulo: a.titulo.trim(),\n  slug,\n  metaTitle,\n  metaDesc,\n  focusKeyword: a.focus_keyword.trim(),\n  excerpt: (a.excerpt || metaDesc).trim(),\n  categoria: catId,\n  tagIds,\n  content: a.content_html.trim() + '\\n' + bloqueCierre,\n  imageUrl: 'https://doble3d.cl/image-gen.php?titulo=' + encodeURIComponent(a.titulo.trim()) + '&subtitulo=' + encodeURIComponent(subt) + '&tag_top=' + encodeURIComponent(tagTop) + '&tag_1=' + encodeURIComponent(tag1) + '&tag_2=' + encodeURIComponent(tag2),\n  filename: slug + '.webp',\n} }];"
+      }
+    },
+    {
+      "id": "a1b2c3d4-0007-4000-8000-genimagen001",
+      "name": "Generar imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "url": "={{ $json.imageUrl }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0008-4000-8000-subirimg0001",
+      "name": "Subir imagen a WP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://doble3d.cl/wp-json/wp/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic WORDPRESS_APP_PASSWORD_REDACTED"
+            },
+            {
+              "name": "Content-Disposition",
+              "value": "=attachment; filename=\"{{ $('Ensamblar post').item.json.filename }}\""
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0009-4000-8000-altimagen001",
+      "name": "Alt de la imagen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://doble3d.cl/wp-json/wp/v2/media/{{ $json.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic WORDPRESS_APP_PASSWORD_REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ alt_text: $('Ensamblar post').item.json.titulo, title: $('Ensamblar post').item.json.titulo }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0010-4000-8000-crearpost001",
+      "name": "Publicar en WordPress",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://doble3d.cl/wp-json/wp/v2/posts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic WORDPRESS_APP_PASSWORD_REDACTED"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  title: $('Ensamblar post').item.json.titulo,\n  slug: $('Ensamblar post').item.json.slug,\n  status: $('Ensamblar post').item.json.status,\n  content: $('Ensamblar post').item.json.content,\n  excerpt: $('Ensamblar post').item.json.excerpt,\n  categories: [$('Ensamblar post').item.json.categoria],\n  tags: $('Ensamblar post').item.json.tagIds,\n  featured_media: $json.id,\n  meta: {\n    _yoast_wpseo_title: $('Ensamblar post').item.json.metaTitle,\n    _yoast_wpseo_metadesc: $('Ensamblar post').item.json.metaDesc,\n    _yoast_wpseo_focuskw: $('Ensamblar post').item.json.focusKeyword\n  }\n}) }}",
+        "options": {
+          "timeout": 120000
+        }
+      }
+    },
+    {
+      "id": "a1b2c3d4-0011-4000-8000-exectrigger1",
+      "name": "Ejecución manual (test)",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -660,
+        180
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Jueves 11:00": {
+      "main": [
+        [
+          {
+            "node": "Elegir tema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir tema": {
+      "main": [
+        [
+          {
+            "node": "Noticias (Serper)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Noticias (Serper)": {
+      "main": [
+        [
+          {
+            "node": "Preparar prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar prompt": {
+      "main": [
+        [
+          {
+            "node": "DeepSeek (redactar)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek (redactar)": {
+      "main": [
+        [
+          {
+            "node": "Ensamblar post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensamblar post": {
+      "main": [
+        [
+          {
+            "node": "Generar imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar imagen": {
+      "main": [
+        [
+          {
+            "node": "Subir imagen a WP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subir imagen a WP": {
+      "main": [
+        [
+          {
+            "node": "Alt de la imagen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alt de la imagen": {
+      "main": [
+        [
+          {
+            "node": "Publicar en WordPress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecución manual (test)": {
+      "main": [
+        [
+          {
+            "node": "Elegir tema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Santiago"
+  },
+  "active": false
+}

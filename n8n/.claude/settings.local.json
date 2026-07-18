@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:Path = 'C:\\\\Users\\\\Alex\\\\nodejs;' + \"$env:APPDATA\\\\npm;\" + $env:Path; n8n --help)",
+      "Read(//c/Users/Alex/nodejs/node_modules/@langchain/**)",
+      "Read(//c/Users/Alex/nodejs/node_modules/@langchain/core/**)",
+      "Bash(grep -o '\"@langchain/core\"[^,]*' \"C:/Users/Alex/nodejs/node_modules/n8n/package.json\"; grep -o '\"utils/uuid[^,]*' \"C:/Users/Alex/nodejs/node_modules/n8n/node_modules/@langchain/core/package.json\"; grep -o '\"\\\\./utils/[a-z_]*\"' \"C:/Users/Alex/nodejs/node_modules/n8n/node_modules/@langchain/core/package.json\" | head -20)",
+      "Read(//c/Users/Alex/nodejs/node_modules/**)",
+      "PowerShell($env:Path = 'C:\\\\Users\\\\Alex\\\\nodejs;' + $env:Path; Set-Location \"C:\\\\Users\\\\Alex\\\\nodejs\\\\node_modules\\\\n8n\\\\node_modules\\\\@langchain\\\\langgraph\"; npm install @langchain/langgraph-checkpoint@1.0.0 --no-save --legacy-peer-deps 2>$null; Write-Output \"EXIT: $LASTEXITCODE\"; Get-Content \".\\\\node_modules\\\\@langchain\\\\langgraph-checkpoint\\\\package.json\" | Select-String -Pattern '\"version\"' | Select-Object -First 1)",
+      "PowerShell($env:Path = 'C:\\\\Users\\\\Alex\\\\nodejs;' + $env:Path; Set-Location \"C:\\\\Users\\\\Alex\\\\nodejs\\\\node_modules\\\\n8n\\\\node_modules\\\\@langchain\\\\langgraph\"; npm install @langchain/langgraph-checkpoint@1.0.0 --no-save --legacy-peer-deps)",
+      "Bash(rm -rf \"C:/Users/Alex/nodejs/node_modules/n8n/node_modules/@langchain/langgraph/node_modules\" && echo cleaned; grep -m1 '\"version\"' \"C:/Users/Alex/nodejs/node_modules/n8n/node_modules/@n8n/ai-utilities/node_modules/langchain/node_modules/@langchain/langgraph/package.json\"; ls \"C:/Users/Alex/nodejs/node_modules/n8n/node_modules/@n8n/ai-utilities/node_modules/langchain/node_modules/@langchain/\" 2>/dev/null)",
+      "PowerShell($env:Path = 'C:\\\\Users\\\\Alex\\\\nodejs;' + $env:Path; Set-Location \"$env:TEMP\"; npm view @langchain/core dist-tags --json)",
+      "PowerShell($p = Get-Process -Id $PID; $chain = @\\(\\); $cur = $p; for \\($i=0; $i -lt 6 -and $cur; $i++\\) { $chain += \"$\\($cur.ProcessName\\) :: $\\($cur.Path\\)\"; $parentId = \\(Get-CimInstance Win32_Process -Filter \"ProcessId=$\\($cur.Id\\)\"\\).ParentProcessId; $cur = try { Get-Process -Id $parentId -ErrorAction Stop } catch { $null } }; $chain)",
+      "PowerShell(& \"C:\\\\Users\\\\Alex\\\\AppData\\\\Roaming\\\\Claude\\\\claude-code\\\\2.1.197\\\\claude.exe\" plugin install frontend-design@claude-plugins-official)",
+      "PowerShell(& \"C:\\\\Users\\\\Alex\\\\AppData\\\\Roaming\\\\Claude\\\\claude-code\\\\2.1.197\\\\claude.exe\" plugin marketplace update claude-plugins-official)",
+      "PowerShell(& \"C:\\\\Users\\\\Alex\\\\AppData\\\\Roaming\\\\Claude\\\\claude-code\\\\2.1.197\\\\claude.exe\" plugin marketplace add anthropics/claude-plugins-official)",
+      "PowerShell(& \"C:\\\\Users\\\\Alex\\\\AppData\\\\Roaming\\\\Claude\\\\claude-code\\\\2.1.197\\\\claude.exe\" plugin install ralph-loop@claude-plugins-official)",
+      "PowerShell(& \"C:\\\\Users\\\\Alex\\\\AppData\\\\Roaming\\\\Claude\\\\claude-code\\\\2.1.197\\\\claude.exe\" plugin install context7@claude-plugins-official)",
+      "WebFetch(domain:github.com)",
+      "PowerShell(git clone --depth 1 https://github.com/microsoft/WindowsDeveloperConfig.git \"C:\\\\Users\\\\Alex\\\\Documents\\\\WindowsDeveloperConfig\")",
+      "PowerShell(winget --version)",
+      "PowerShell(winget configure --help)",
+      "PowerShell(Get-AppxPackage Microsoft.DesktopAppInstaller -ErrorAction SilentlyContinue)",
+      "PowerShell($isAdmin = \\([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent\\(\\)\\).IsInRole\\([Security.Principal.WindowsBuiltInRole]::Administrator\\); \"Admin: $isAdmin\"; \"PSVersion: $\\($PSVersionTable.PSVersion\\)\"; \"Arch: $env:PROCESSOR_ARCHITECTURE\")",
+      "PowerShell($sp = \"C:\\\\Users\\\\Alex\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Alex-Documents-n8n\\\\2d50251b-106a-4ce1-8af9-5a9b8bfafb9b\\\\scratchpad\"; New-Item -ItemType Directory -Force \"$sp\\\\winget\" | Out-Null; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $rel = Invoke-RestMethod \"https://api.github.com/repos/microsoft/winget-cli/releases/latest\"; \"Version: $\\($rel.tag_name\\)\"; $rel.assets | ForEach-Object { $_.name })",
+      "PowerShell($sp = \"C:\\\\Users\\\\Alex\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Alex-Documents-n8n\\\\2d50251b-106a-4ce1-8af9-5a9b8bfafb9b\\\\scratchpad\\\\winget\"; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; $base = \"https://github.com/microsoft/winget-cli/releases/download/v1.29.280\"; Invoke-WebRequest \"$base/Microsoft.DesktopAppInstaller_8wekyb3d8bbwe.msixbundle\" -OutFile \"$sp\\\\AppInstaller.msixbundle\"; Invoke-WebRequest \"$base/DesktopAppInstaller_Dependencies.zip\" -OutFile \"$sp\\\\Deps.zip\"; Invoke-WebRequest \"$base/e53e159d00e04f729cc2180cffd1c02e_License1.xml\" -OutFile \"$sp\\\\License1.xml\"; Expand-Archive \"$sp\\\\Deps.zip\" -DestinationPath \"$sp\\\\deps\" -Force; Get-ChildItem \"$sp\\\\deps\" -Recurse -File | Select-Object -ExpandProperty FullName)",
+      "PowerShell($sp = \"C:\\\\Users\\\\Alex\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Alex-Documents-n8n\\\\2d50251b-106a-4ce1-8af9-5a9b8bfafb9b\\\\scratchpad\\\\winget\"; Add-AppxPackage -Path \"$sp\\\\AppInstaller.msixbundle\"; Start-Sleep -Seconds 3; Get-AppxPackage Microsoft.DesktopAppInstaller | Select-Object Name, Version)",
+      "PowerShell(winget configure --enable)",
+      "PowerShell($dir = \"C:\\\\Users\\\\Alex\\\\Documents\\\\WindowsDeveloperConfig\\\\windows-dev-config\"; $log = \"C:\\\\Users\\\\Alex\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-Alex-Documents-n8n\\\\2d50251b-106a-4ce1-8af9-5a9b8bfafb9b\\\\scratchpad\\\\winget-configure.log\"; winget configure -f \"$dir\\\\dev-config-no-wsl.winget\" --accept-configuration-agreements --disable-interactivity | Tee-Object -FilePath $log)",
+      "PowerShell($n8n = Get-Command n8n -ErrorAction SilentlyContinue; if \\($n8n\\) { \"n8n -> $\\($n8n.Source\\)\"; & n8n --version } else { \"n8n no está en el PATH de esta sesión\" })",
+      "PowerShell(\"=== USER PATH ===\"; \\([Environment]::GetEnvironmentVariable\\('Path','User'\\) -split ';'\\) | Where-Object { $_ }; \"=== nodejs dir ===\"; Test-Path \"C:\\\\Users\\\\Alex\\\\nodejs\\\\node.exe\"; \"=== NVM vars ===\"; [Environment]::GetEnvironmentVariable\\('NVM_HOME','User'\\); [Environment]::GetEnvironmentVariable\\('NVM_SYMLINK','User'\\))",
+      "PowerShell($env:NVM_HOME = \"C:\\\\Users\\\\Alex\\\\AppData\\\\Local\\\\nvm\"; $env:NVM_SYMLINK = \"C:\\\\nvm4w\\\\nodejs\"; $env:Path = \"$env:NVM_HOME;$env:NVM_SYMLINK;$env:Path\"; & \"$env:NVM_HOME\\\\nvm.exe\" use 24.18.0; Start-Sleep -Seconds 2; Get-Item \"C:\\\\nvm4w\\\\nodejs\" | Select-Object LinkType, Target)",
+      "PowerShell($env:Path = \"C:\\\\nvm4w\\\\nodejs;$env:Path\"; node --version; n8n --version)",
+      "PowerShell(try { $r = Invoke-WebRequest \"http://localhost:5678\" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop; \"n8n corriendo \\(HTTP $\\($r.StatusCode\\)\\)\" } catch { \"n8n no está corriendo ahora mismo\" })"
+    ]
+  }
+}

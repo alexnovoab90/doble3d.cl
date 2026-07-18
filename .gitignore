@@ -1,0 +1,7 @@
+.worktrees/
+.superpowers/
+audit/backups/
+audit/baseline/
+n8n/logs/
+*.log
+
