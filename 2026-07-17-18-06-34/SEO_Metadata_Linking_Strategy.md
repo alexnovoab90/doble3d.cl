@@ -6,11 +6,11 @@ Para maximizar el impacto de los nuevos artículos del blog en el ranking de Goo
 Cada nuevo artículo debe actuar como un puente hacia las páginas de servicios principales (Money Pages).
 
 - **Desde el Artículo de VR Minería:** 
-  - Enlace al servicio de [VR](https://doble3d.cl/#servicios) con el texto: "simulaciones de mantenimiento sobre equipos críticos".
-  - Enlace a [CORE](https://doble3d.cl/#core) con el texto: "gestión centralizada de entrenamiento VR".
+  - Enlace al servicio de [VR](https://doble3d.cl/servicios/realidad-virtual/) con el texto: "simulaciones de mantenimiento sobre equipos críticos".
+  - Enlace a [CORE](https://doble3d.cl/servicios/core/) con el texto: "gestión centralizada de entrenamiento VR".
 
 - **Desde el Artículo de Animación 3D:**
-  - Enlace al servicio de [Animación 3D](https://doble3d.cl/#servicios) con el texto: "videos industriales que explican procesos complejos".
+  - Enlace al servicio de [Animación 3D](https://doble3d.cl/servicios/animacion-3d/) con el texto: "videos industriales que explican procesos complejos".
 
 ## 2. Metadatos Recomendados
 Optimizar los snippets que aparecen en Google para aumentar el CTR (Click-Through Rate).

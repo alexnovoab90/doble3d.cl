@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot '..\baseline')
+    [string]$OutputDir = (Join-Path $PSScriptRoot '..\baseline'),
+    [string]$ExpectedMetadataCsv
 )
 
 $ErrorActionPreference = 'Stop'
@@ -50,3 +51,25 @@ $rows | ConvertTo-Json -Depth 4 | Set-Content -Path $outputPath -Encoding utf8
 Write-Output "Baseline guardada: $outputPath"
 $rows | Select-Object url, status, titleLength, descriptionLength | Format-Table -AutoSize
 
+if ($ExpectedMetadataCsv) {
+    $expectedRows = Import-Csv -LiteralPath $ExpectedMetadataCsv
+    $errors = [System.Collections.Generic.List[string]]::new()
+    foreach ($expected in $expectedRows) {
+        $actual = $rows | Where-Object url -eq $expected.url | Select-Object -First 1
+        if (-not $actual) {
+            $errors.Add("missing_url: $($expected.url)")
+            continue
+        }
+        if ($actual.status -ne 200) { $errors.Add("invalid_status: $($expected.url)=$($actual.status)") }
+        if ($actual.title -ne $expected.title) { $errors.Add("title_mismatch: $($expected.url)") }
+        if ($actual.description -ne $expected.description) { $errors.Add("description_mismatch: $($expected.url)") }
+        if ($actual.titleLength -gt 60) { $errors.Add("title_too_long: $($expected.url)") }
+        if ($actual.descriptionLength -lt 120 -or $actual.descriptionLength -gt 155) {
+            $errors.Add("description_length: $($expected.url)=$($actual.descriptionLength)")
+        }
+    }
+    if ($errors.Count) {
+        throw "Metadata verification failed:`n$($errors -join "`n")"
+    }
+    Write-Output "Metadatos verificados: $($expectedRows.Count) URLs"
+}
