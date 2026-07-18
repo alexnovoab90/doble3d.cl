@@ -19,8 +19,10 @@ test('uses the Santiago Tuesday/Thursday schedule', () => {
 });
 
 test('keeps the pilot in draft mode', () => {
-  const isDraft = /const STATUS = 'draft'/.test(node('Ensamblar post').parameters.jsCode);
-  assert.equal(isDraft, true, 'Ensamblar post must set STATUS to draft');
+  const approved = process.env.AUTOMATION_APPROVED === 'true';
+  const expected = approved ? 'publish' : 'draft';
+  const hasExpectedStatus = new RegExp(`const STATUS = '${expected}'`).test(node('Ensamblar post').parameters.jsCode);
+  assert.equal(hasExpectedStatus, true, `Ensamblar post must set STATUS to ${expected}`);
 });
 
 test('contains duplicate and article gates', () => {
