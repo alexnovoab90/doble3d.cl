@@ -96,6 +96,10 @@ const required = ['titulo','slug','meta_title','meta_description','focus_keyword
 const normalize = value => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 const tokens = value => new Set(normalize(value).split('-').filter(Boolean));
 const similarity = (left, right) => { const a=tokens(left), b=tokens(right); const both=[...a].filter(value=>b.has(value)).length; const all=new Set([...a,...b]).size; return all ? both/all : 0; };
+const makeIdempotencyKey = (topic, slug) => {
+  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  return date + '|' + normalize(topic) + '|' + normalize(slug);
+};
 const parseResponse = response => {
   const choice = (response.choices && response.choices[0]) || {};
   let raw = (choice.message && choice.message.content) || '';
@@ -125,7 +129,8 @@ const initialValidatorCode = String.raw`${validationHelpers}
 const article = parseResponse($json);
 const existingPosts = $('Validar candidato').item.json.existingPosts ?? [];
 const validationErrors = validate(article, existingPosts);
-if (!validationErrors.length) return [{ json: { article, needsCorrection: false, validationErrors: [] } }];
+const idempotencyKey = makeIdempotencyKey($('Validar candidato').item.json.topic, article.slug);
+if (!validationErrors.length) return [{ json: { article, idempotencyKey, needsCorrection: false, validationErrors: [] } }];
 
 const correctionBody = {
   model: 'deepseek-v4-pro',
@@ -145,7 +150,8 @@ const article = parseResponse($json);
 const existingPosts = $('Validar candidato').item.json.existingPosts ?? [];
 const validationErrors = validate(article, existingPosts);
 if (validationErrors.length) throw new Error('ARTICLE_INVALID_AFTER_CORRECTION: ' + validationErrors.join(','));
-return [{ json: { article, needsCorrection: false, validationErrors: [] } }];`;
+const idempotencyKey = makeIdempotencyKey($('Validar candidato').item.json.topic, article.slug);
+return [{ json: { article, idempotencyKey, needsCorrection: false, validationErrors: [] } }];`;
 
 const searchDuplicate = {
   id: 'a1b2c3d4-0101-4000-8000-buscardupl001',
@@ -205,6 +211,7 @@ const searchSlug = {
       { name: 'slug', value: '={{ $json.article.slug }}' },
       { name: 'per_page', value: '1' },
       { name: 'status', value: 'publish,draft,pending,private' },
+      { name: 'context', value: 'edit' },
       { name: '_fields', value: 'id,slug' },
     ] },
     options: { timeout: 60000 },
@@ -234,12 +241,36 @@ const preservedTags = oldCode.slice(tagStart, tagEnd);
 const preservedClosing = oldCode.slice(schemaStart, imageVarsStart);
 assemble.parameters.jsCode = `// Ensambla únicamente un artículo que ya superó ambas validaciones.\nconst STATUS = 'draft';\nconst WP = 'https://doble3d.cl/wp-json/wp/v2';\nconst AUTH = ${oldCode.match(/const AUTH = .*?;\n/)[0].slice('const AUTH = '.length, -2)};\nconst a = $json.article;\nif (!a) throw new Error('MISSING_VALIDATED_ARTICLE');\n\n${preservedCats}${preservedTags}${preservedClosing}const subt = String(a.subtitulo_imagen || a.focus_keyword).slice(0, 60);\nconst tagTop = String(a.tag_top).slice(0, 32);\nconst tag1 = String(a.tag_1).slice(0, 18);\nconst tag2 = String(a.tag_2).slice(0, 18);\n\nreturn [{ json: {\n  status: STATUS,\n  titulo: a.titulo.trim(),\n  slug: a.slug,\n  metaTitle: a.meta_title.trim(),\n  metaDesc: a.meta_description.trim(),\n  focusKeyword: a.focus_keyword.trim(),\n  excerpt: a.excerpt.trim(),\n  categoria: catId,\n  tagIds,\n  content: a.content.trim() + '\\n' + bloqueCierre,\n  sources: a.fuentes,\n  imageUrl: 'https://doble3d.cl/image-gen.php?titulo=' + encodeURIComponent(a.titulo_imagen) + '&subtitulo=' + encodeURIComponent(subt) + '&tag_top=' + encodeURIComponent(tagTop) + '&tag_1=' + encodeURIComponent(tag1) + '&tag_2=' + encodeURIComponent(tag2),\n  filename: a.slug + '.webp',\n} }];`;
 
+assemble.parameters.jsCode = assemble.parameters.jsCode.replace(
+  '  sources: a.fuentes,\n',
+  '  sources: a.fuentes,\n  idempotencyKey: $json.idempotencyKey,\n',
+);
+
 workflow.nodes = workflow.nodes.filter(item => ![
   'Buscar duplicado', 'Validar candidato', 'Validar artículo', '¿Requiere corrección?',
   'DeepSeek (corregir)', 'Validar artículo corregido', 'Artículo aprobado',
   'Buscar slug final', 'Confirmar slug final',
 ].includes(item.name));
 workflow.nodes.push(searchDuplicate, validateCandidate, validateArticle, correctionIf, correctionRequest, validateCorrected, approvedArticle, searchSlug, confirmSlug);
+
+const retrySafeNodes = [
+  'Noticias RSS', 'Buscar duplicado', 'DeepSeek (redactar)', 'DeepSeek (corregir)',
+  'Buscar slug final', 'Generar imagen', 'Alt de la imagen',
+];
+for (const name of retrySafeNodes) {
+  const item = findNode(name);
+  item.retryOnFail = true;
+  item.maxTries = 3;
+  item.waitBetweenTries = 5000;
+  item.notes = 'Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s.';
+}
+for (const name of ['Subir imagen a WP', 'Publicar en WordPress']) {
+  const item = findNode(name);
+  delete item.retryOnFail;
+  delete item.maxTries;
+  delete item.waitBetweenTries;
+  item.notes = 'Sin reintento ciego: un timeout de este POST no demuestra que el servidor no haya creado el recurso.';
+}
 
 workflow.connections = {
   'Martes y Jueves 11:00': connection('Elegir tema'),
@@ -264,5 +295,6 @@ workflow.connections = {
 };
 
 workflow.active = false;
+workflow.settings.errorWorkflow = 'Doble3DErrorHandler1';
 writeFileSync(workflowPath, `${JSON.stringify(workflow, null, 2)}\n`, 'utf8');
 console.log(`Consolidated ${workflow.nodes.length} nodes in ${workflowPath}`);

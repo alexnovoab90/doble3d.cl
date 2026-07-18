@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -68,6 +68,42 @@ test('wires preflight, one correction branch and final slug guard in order', () 
   assert.deepEqual(targets('DeepSeek (corregir)'), ['Validar artículo corregido']);
   assert.deepEqual(targets('Validar artículo corregido'), ['Buscar slug final']);
   assert.deepEqual(targets('Artículo aprobado'), ['Buscar slug final']);
+  assert.deepEqual(targets('Buscar slug final'), ['Confirmar slug final']);
+  assert.deepEqual(targets('Confirmar slug final'), ['Ensamblar post']);
+});
+
+test('configures bounded retries only on retry-safe HTTP operations', () => {
+  const retrySafe = [
+    'Noticias RSS', 'Buscar duplicado', 'DeepSeek (redactar)', 'DeepSeek (corregir)',
+    'Buscar slug final', 'Generar imagen', 'Alt de la imagen',
+  ];
+  for (const name of retrySafe) {
+    assert.equal(node(name).retryOnFail, true, `${name} must retry`);
+    assert.equal(node(name).maxTries, 3, `${name} must have bounded retries`);
+    assert.equal(node(name).waitBetweenTries, 5000, `${name} must wait between retries`);
+  }
+  for (const name of ['Subir imagen a WP', 'Publicar en WordPress']) {
+    assert.notEqual(node(name).retryOnFail, true, `${name} must not retry a non-idempotent POST blindly`);
+  }
+});
+
+test('links an inactive, redacted error workflow', () => {
+  const errorPath = join(root, 'error-handler-doble3d.json');
+  assert.equal(existsSync(errorPath), true, 'error workflow export is required');
+  const errorWorkflow = JSON.parse(readFileSync(errorPath, 'utf8'));
+  assert.equal(workflow.settings.errorWorkflow, errorWorkflow.id);
+  assert.equal(errorWorkflow.active, false);
+  assert.deepEqual(
+    errorWorkflow.nodes.map(item => item.name),
+    ['Error Trigger', 'Formatear error', 'Send Email'],
+  );
+  const formatter = errorWorkflow.nodes.find(item => item.name === 'Formatear error').parameters.jsCode;
+  assert.equal(/authorization|headers|requestBody/i.test(formatter), false);
+});
+
+test('queries the final slug with edit context immediately before assembly', () => {
+  const query = node('Buscar slug final').parameters.queryParameters.parameters;
+  assert.ok(query.some(item => item.name === 'context' && item.value === 'edit'));
   assert.deepEqual(targets('Buscar slug final'), ['Confirmar slug final']);
   assert.deepEqual(targets('Confirmar slug final'), ['Ensamblar post']);
 });

@@ -63,7 +63,11 @@
           },
           "timeout": 60000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0004-4000-8000-preppromp001",
@@ -109,7 +113,11 @@
         "options": {
           "timeout": 300000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0006-4000-8000-ensamblar001",
@@ -121,7 +129,7 @@
         180
       ],
       "parameters": {
-        "jsCode": "// Ensambla únicamente un artículo que ya superó ambas validaciones.\nconst STATUS = 'draft';\nconst WP = 'https://doble3d.cl/wp-json/wp/v2';\nconst AUTH = { Authorization: 'Basic WORDPRESS_APP_PASSWORD_REDACTED' };\nconst a = $json.article;\nif (!a) throw new Error('MISSING_VALIDATED_ARTICLE');\n\nconst CATS = { 'realidad virtual en minería': 14, 'realidad virtual en mineria': 14, 'realidad virtual': 39, 'videos 3d minería': 1, 'videos 3d mineria': 1, 'realidad mixta': 15, 'inteligencia artificial': 32, 'innovación': 61, 'innovacion': 61, 'tecnología': 52, 'tecnologia': 52, 'webgl en minería': 17, 'webgl en mineria': 17 };\nconst catId = CATS[(a.categoria || '').toLowerCase().trim()] || 39;\n\n// Resolver tags: buscar cada uno en WP, crear los que no existan.\nconst tagIds = [];\nfor (const nombre of (a.tags || []).slice(0, 5)) {\n  const name = String(nombre).trim();\n  if (!name) continue;\n  try {\n    const found = await this.helpers.httpRequest({ method: 'GET', url: WP + '/tags', qs: { search: name, per_page: 10 }, headers: AUTH, json: true });\n    const exact = (found || []).find(t => t.name.toLowerCase() === name.toLowerCase());\n    if (exact) { tagIds.push(exact.id); continue; }\n    const created = await this.helpers.httpRequest({ method: 'POST', url: WP + '/tags', body: { name }, headers: AUTH, json: true });\n    if (created && created.id) tagIds.push(created.id);\n  } catch (e) { /* un tag fallido no detiene la publicación */ }\n}\n\n// Schema JSON-LD FAQPage (AEO) a partir del array faq.\nconst clean = (s) => String(s || '').replace(/<[^>]*>/g, '').trim();\nconst faqLd = {\n  '@context': 'https://schema.org',\n  '@type': 'FAQPage',\n  mainEntity: a.faq.slice(0, 6).map(f => ({\n    '@type': 'Question', name: clean(f.q),\n    acceptedAnswer: { '@type': 'Answer', text: clean(f.a) },\n  })),\n};\n\n// Bloques fijos de cierre (enlaces internos + CTA), como en los templates.\nconst bloqueCierre = [\n'<h2>Para profundizar en capacitación VR para minería</h2>',\n'<ul>',\n'<li><a href=\"https://doble3d.cl/servicios/realidad-virtual/\">Realidad virtual industrial para entrenamiento en minería</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/animacion-3d/\">Animación 3D técnica para procesos industriales</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/gamificacion-scorm/\">Apps gamificadas con SCORM para entrenamiento industrial</a></li>',\n'</ul>',\n'<p>En Doble 3D desarrollamos <a href=\"https://doble3d.cl/servicios/realidad-virtual/\">capacitación en realidad virtual</a> para faenas mineras tier-1 como Codelco, Minera Centinela y FlyWithUs, y <a href=\"https://doble3d.cl/servicios/animacion-3d/\">videos 3D para minería</a> para clientes como FLS (FLSmidth). Centraliza y mide tu entrenamiento inmersivo con <a href=\"https://doble3d.cl/servicios/core/\">CORE</a>.</p>',\n'<h2>¿Quieres llevar la capacitación inmersiva industrial a tu operación?</h2>',\n'<p>En Doble 3D Studio diseñamos experiencias inmersivas a medida para minería e industrias de alto riesgo, integradas a las plataformas que ya usas, con soporte postventa perpetuo.</p>',\n'<p>👉 <a href=\"https://wa.me/56958015971\" target=\"_blank\" rel=\"noopener\">Conversemos por WhatsApp</a><br>🌐 <a href=\"https://doble3d.cl/servicios/\">Conoce más</a></p>',\n'<script type=\"application/ld+json\">' + JSON.stringify(faqLd) + '</script>',\n].join('\\n');\n\nconst subt = String(a.subtitulo_imagen || a.focus_keyword).slice(0, 60);\nconst tagTop = String(a.tag_top).slice(0, 32);\nconst tag1 = String(a.tag_1).slice(0, 18);\nconst tag2 = String(a.tag_2).slice(0, 18);\n\nreturn [{ json: {\n  status: STATUS,\n  titulo: a.titulo.trim(),\n  slug: a.slug,\n  metaTitle: a.meta_title.trim(),\n  metaDesc: a.meta_description.trim(),\n  focusKeyword: a.focus_keyword.trim(),\n  excerpt: a.excerpt.trim(),\n  categoria: catId,\n  tagIds,\n  content: a.content.trim() + '\\n' + bloqueCierre,\n  sources: a.fuentes,\n  imageUrl: 'https://doble3d.cl/image-gen.php?titulo=' + encodeURIComponent(a.titulo_imagen) + '&subtitulo=' + encodeURIComponent(subt) + '&tag_top=' + encodeURIComponent(tagTop) + '&tag_1=' + encodeURIComponent(tag1) + '&tag_2=' + encodeURIComponent(tag2),\n  filename: a.slug + '.webp',\n} }];"
+        "jsCode": "// Ensambla únicamente un artículo que ya superó ambas validaciones.\nconst STATUS = 'draft';\nconst WP = 'https://doble3d.cl/wp-json/wp/v2';\nconst AUTH = { Authorization: 'Basic WORDPRESS_APP_PASSWORD_REDACTED' };\nconst a = $json.article;\nif (!a) throw new Error('MISSING_VALIDATED_ARTICLE');\n\nconst CATS = { 'realidad virtual en minería': 14, 'realidad virtual en mineria': 14, 'realidad virtual': 39, 'videos 3d minería': 1, 'videos 3d mineria': 1, 'realidad mixta': 15, 'inteligencia artificial': 32, 'innovación': 61, 'innovacion': 61, 'tecnología': 52, 'tecnologia': 52, 'webgl en minería': 17, 'webgl en mineria': 17 };\nconst catId = CATS[(a.categoria || '').toLowerCase().trim()] || 39;\n\n// Resolver tags: buscar cada uno en WP, crear los que no existan.\nconst tagIds = [];\nfor (const nombre of (a.tags || []).slice(0, 5)) {\n  const name = String(nombre).trim();\n  if (!name) continue;\n  try {\n    const found = await this.helpers.httpRequest({ method: 'GET', url: WP + '/tags', qs: { search: name, per_page: 10 }, headers: AUTH, json: true });\n    const exact = (found || []).find(t => t.name.toLowerCase() === name.toLowerCase());\n    if (exact) { tagIds.push(exact.id); continue; }\n    const created = await this.helpers.httpRequest({ method: 'POST', url: WP + '/tags', body: { name }, headers: AUTH, json: true });\n    if (created && created.id) tagIds.push(created.id);\n  } catch (e) { /* un tag fallido no detiene la publicación */ }\n}\n\n// Schema JSON-LD FAQPage (AEO) a partir del array faq.\nconst clean = (s) => String(s || '').replace(/<[^>]*>/g, '').trim();\nconst faqLd = {\n  '@context': 'https://schema.org',\n  '@type': 'FAQPage',\n  mainEntity: a.faq.slice(0, 6).map(f => ({\n    '@type': 'Question', name: clean(f.q),\n    acceptedAnswer: { '@type': 'Answer', text: clean(f.a) },\n  })),\n};\n\n// Bloques fijos de cierre (enlaces internos + CTA), como en los templates.\nconst bloqueCierre = [\n'<h2>Para profundizar en capacitación VR para minería</h2>',\n'<ul>',\n'<li><a href=\"https://doble3d.cl/servicios/realidad-virtual/\">Realidad virtual industrial para entrenamiento en minería</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/animacion-3d/\">Animación 3D técnica para procesos industriales</a></li>',\n'<li><a href=\"https://doble3d.cl/servicios/gamificacion-scorm/\">Apps gamificadas con SCORM para entrenamiento industrial</a></li>',\n'</ul>',\n'<p>En Doble 3D desarrollamos <a href=\"https://doble3d.cl/servicios/realidad-virtual/\">capacitación en realidad virtual</a> para faenas mineras tier-1 como Codelco, Minera Centinela y FlyWithUs, y <a href=\"https://doble3d.cl/servicios/animacion-3d/\">videos 3D para minería</a> para clientes como FLS (FLSmidth). Centraliza y mide tu entrenamiento inmersivo con <a href=\"https://doble3d.cl/servicios/core/\">CORE</a>.</p>',\n'<h2>¿Quieres llevar la capacitación inmersiva industrial a tu operación?</h2>',\n'<p>En Doble 3D Studio diseñamos experiencias inmersivas a medida para minería e industrias de alto riesgo, integradas a las plataformas que ya usas, con soporte postventa perpetuo.</p>',\n'<p>👉 <a href=\"https://wa.me/56958015971\" target=\"_blank\" rel=\"noopener\">Conversemos por WhatsApp</a><br>🌐 <a href=\"https://doble3d.cl/servicios/\">Conoce más</a></p>',\n'<script type=\"application/ld+json\">' + JSON.stringify(faqLd) + '</script>',\n].join('\\n');\n\nconst subt = String(a.subtitulo_imagen || a.focus_keyword).slice(0, 60);\nconst tagTop = String(a.tag_top).slice(0, 32);\nconst tag1 = String(a.tag_1).slice(0, 18);\nconst tag2 = String(a.tag_2).slice(0, 18);\n\nreturn [{ json: {\n  status: STATUS,\n  titulo: a.titulo.trim(),\n  slug: a.slug,\n  metaTitle: a.meta_title.trim(),\n  metaDesc: a.meta_description.trim(),\n  focusKeyword: a.focus_keyword.trim(),\n  excerpt: a.excerpt.trim(),\n  categoria: catId,\n  tagIds,\n  content: a.content.trim() + '\\n' + bloqueCierre,\n  sources: a.fuentes,\n  idempotencyKey: $json.idempotencyKey,\n  imageUrl: 'https://doble3d.cl/image-gen.php?titulo=' + encodeURIComponent(a.titulo_imagen) + '&subtitulo=' + encodeURIComponent(subt) + '&tag_top=' + encodeURIComponent(tagTop) + '&tag_1=' + encodeURIComponent(tag1) + '&tag_2=' + encodeURIComponent(tag2),\n  filename: a.slug + '.webp',\n} }];"
       }
     },
     {
@@ -143,7 +151,11 @@
           },
           "timeout": 120000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0008-4000-8000-subirimg0001",
@@ -176,7 +188,8 @@
         "options": {
           "timeout": 120000
         }
-      }
+      },
+      "notes": "Sin reintento ciego: un timeout de este POST no demuestra que el servidor no haya creado el recurso."
     },
     {
       "id": "a1b2c3d4-0009-4000-8000-altimagen001",
@@ -209,7 +222,11 @@
         "options": {
           "timeout": 60000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0010-4000-8000-crearpost001",
@@ -242,7 +259,8 @@
         "options": {
           "timeout": 120000
         }
-      }
+      },
+      "notes": "Sin reintento ciego: un timeout de este POST no demuestra que el servidor no haya creado el recurso."
     },
     {
       "id": "a1b2c3d4-0011-4000-8000-exectrigger1",
@@ -300,7 +318,11 @@
         "options": {
           "timeout": 60000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0102-4000-8000-validcand001",
@@ -325,7 +347,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "\nconst commercialUrls = [\n  'https://doble3d.cl/servicios/realidad-virtual/',\n  'https://doble3d.cl/servicios/animacion-3d/',\n  'https://doble3d.cl/servicios/core/',\n  'https://doble3d.cl/servicios/gamificacion-scorm/'\n];\nconst required = ['titulo','slug','meta_title','meta_description','focus_keyword','categoria','tags','fuentes','faq','excerpt','content','titulo_imagen','subtitulo_imagen','tag_top','tag_1','tag_2'];\nconst normalize = value => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst tokens = value => new Set(normalize(value).split('-').filter(Boolean));\nconst similarity = (left, right) => { const a=tokens(left), b=tokens(right); const both=[...a].filter(value=>b.has(value)).length; const all=new Set([...a,...b]).size; return all ? both/all : 0; };\nconst parseResponse = response => {\n  const choice = (response.choices && response.choices[0]) || {};\n  let raw = (choice.message && choice.message.content) || '';\n  raw = raw.replace(/^\\s*\\`\\`\\`(?:json)?/i, '').replace(/\\`\\`\\`\\s*$/i, '').trim();\n  const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');\n  if (start >= 0 && end > start) raw = raw.slice(start, end + 1);\n  try { return JSON.parse(raw); } catch { throw new Error('INVALID_MODEL_JSON'); }\n};\nconst validate = (article, existingPosts) => {\n  const errors = [];\n  for (const key of required) if (!Object.hasOwn(article, key) || (typeof article[key] === 'string' && !article[key].trim())) errors.push('missing_' + key);\n  const titleLength = String(article.meta_title ?? '').trim().length;\n  const descriptionLength = String(article.meta_description ?? '').trim().length;\n  if (titleLength < 35 || titleLength > 60) errors.push('invalid_meta_title_length');\n  if (descriptionLength < 120 || descriptionLength > 155) errors.push('invalid_meta_description_length');\n  if (!Array.isArray(article.tags) || article.tags.length > 5) errors.push('invalid_tags');\n  if (!Array.isArray(article.faq) || article.faq.length < 3) errors.push('insufficient_faq');\n  const validSources = Array.isArray(article.fuentes) && article.fuentes.some(source => source && /^https:\\/\\//i.test(source.url ?? '') && source.titulo && source.fecha && source.medio);\n  if (!validSources) errors.push('invalid_sources');\n  if (!commercialUrls.some(url => String(article.content ?? '').includes(url))) errors.push('missing_commercial_link');\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+){2,5}$/.test(String(article.slug ?? ''))) errors.push('invalid_slug');\n  if (existingPosts.some(post => normalize(post.slug) === normalize(article.slug) || similarity(post.title, article.titulo) >= 0.70)) errors.push('duplicate_article');\n  return [...new Set(errors)];\n};\nconst article = parseResponse($json);\nconst existingPosts = $('Validar candidato').item.json.existingPosts ?? [];\nconst validationErrors = validate(article, existingPosts);\nif (!validationErrors.length) return [{ json: { article, needsCorrection: false, validationErrors: [] } }];\n\nconst correctionBody = {\n  model: 'deepseek-v4-pro',\n  messages: [\n    { role: 'system', content: 'Corrige el objeto para cumplir todas las reglas. Devuelve únicamente JSON, conserva hechos y fuentes reales, no inventes URLs.' },\n    { role: 'user', content: 'Errores: ' + validationErrors.join(', ') + '\\nObjeto: ' + JSON.stringify(article) }\n  ],\n  response_format: { type: 'json_object' },\n  temperature: 0.2,\n  max_tokens: 12000,\n  thinking: { type: 'disabled' }\n};\nreturn [{ json: { article, needsCorrection: true, validationErrors, correctionBody } }];"
+        "jsCode": "\nconst commercialUrls = [\n  'https://doble3d.cl/servicios/realidad-virtual/',\n  'https://doble3d.cl/servicios/animacion-3d/',\n  'https://doble3d.cl/servicios/core/',\n  'https://doble3d.cl/servicios/gamificacion-scorm/'\n];\nconst required = ['titulo','slug','meta_title','meta_description','focus_keyword','categoria','tags','fuentes','faq','excerpt','content','titulo_imagen','subtitulo_imagen','tag_top','tag_1','tag_2'];\nconst normalize = value => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst tokens = value => new Set(normalize(value).split('-').filter(Boolean));\nconst similarity = (left, right) => { const a=tokens(left), b=tokens(right); const both=[...a].filter(value=>b.has(value)).length; const all=new Set([...a,...b]).size; return all ? both/all : 0; };\nconst makeIdempotencyKey = (topic, slug) => {\n  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());\n  return date + '|' + normalize(topic) + '|' + normalize(slug);\n};\nconst parseResponse = response => {\n  const choice = (response.choices && response.choices[0]) || {};\n  let raw = (choice.message && choice.message.content) || '';\n  raw = raw.replace(/^\\s*\\`\\`\\`(?:json)?/i, '').replace(/\\`\\`\\`\\s*$/i, '').trim();\n  const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');\n  if (start >= 0 && end > start) raw = raw.slice(start, end + 1);\n  try { return JSON.parse(raw); } catch { throw new Error('INVALID_MODEL_JSON'); }\n};\nconst validate = (article, existingPosts) => {\n  const errors = [];\n  for (const key of required) if (!Object.hasOwn(article, key) || (typeof article[key] === 'string' && !article[key].trim())) errors.push('missing_' + key);\n  const titleLength = String(article.meta_title ?? '').trim().length;\n  const descriptionLength = String(article.meta_description ?? '').trim().length;\n  if (titleLength < 35 || titleLength > 60) errors.push('invalid_meta_title_length');\n  if (descriptionLength < 120 || descriptionLength > 155) errors.push('invalid_meta_description_length');\n  if (!Array.isArray(article.tags) || article.tags.length > 5) errors.push('invalid_tags');\n  if (!Array.isArray(article.faq) || article.faq.length < 3) errors.push('insufficient_faq');\n  const validSources = Array.isArray(article.fuentes) && article.fuentes.some(source => source && /^https:\\/\\//i.test(source.url ?? '') && source.titulo && source.fecha && source.medio);\n  if (!validSources) errors.push('invalid_sources');\n  if (!commercialUrls.some(url => String(article.content ?? '').includes(url))) errors.push('missing_commercial_link');\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+){2,5}$/.test(String(article.slug ?? ''))) errors.push('invalid_slug');\n  if (existingPosts.some(post => normalize(post.slug) === normalize(article.slug) || similarity(post.title, article.titulo) >= 0.70)) errors.push('duplicate_article');\n  return [...new Set(errors)];\n};\nconst article = parseResponse($json);\nconst existingPosts = $('Validar candidato').item.json.existingPosts ?? [];\nconst validationErrors = validate(article, existingPosts);\nconst idempotencyKey = makeIdempotencyKey($('Validar candidato').item.json.topic, article.slug);\nif (!validationErrors.length) return [{ json: { article, idempotencyKey, needsCorrection: false, validationErrors: [] } }];\n\nconst correctionBody = {\n  model: 'deepseek-v4-pro',\n  messages: [\n    { role: 'system', content: 'Corrige el objeto para cumplir todas las reglas. Devuelve únicamente JSON, conserva hechos y fuentes reales, no inventes URLs.' },\n    { role: 'user', content: 'Errores: ' + validationErrors.join(', ') + '\\nObjeto: ' + JSON.stringify(article) }\n  ],\n  response_format: { type: 'json_object' },\n  temperature: 0.2,\n  max_tokens: 12000,\n  thinking: { type: 'disabled' }\n};\nreturn [{ json: { article, needsCorrection: true, validationErrors, correctionBody } }];"
       }
     },
     {
@@ -392,7 +414,11 @@
         "options": {
           "timeout": 300000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0106-4000-8000-validcorr001",
@@ -404,7 +430,7 @@
         -100
       ],
       "parameters": {
-        "jsCode": "\nconst commercialUrls = [\n  'https://doble3d.cl/servicios/realidad-virtual/',\n  'https://doble3d.cl/servicios/animacion-3d/',\n  'https://doble3d.cl/servicios/core/',\n  'https://doble3d.cl/servicios/gamificacion-scorm/'\n];\nconst required = ['titulo','slug','meta_title','meta_description','focus_keyword','categoria','tags','fuentes','faq','excerpt','content','titulo_imagen','subtitulo_imagen','tag_top','tag_1','tag_2'];\nconst normalize = value => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst tokens = value => new Set(normalize(value).split('-').filter(Boolean));\nconst similarity = (left, right) => { const a=tokens(left), b=tokens(right); const both=[...a].filter(value=>b.has(value)).length; const all=new Set([...a,...b]).size; return all ? both/all : 0; };\nconst parseResponse = response => {\n  const choice = (response.choices && response.choices[0]) || {};\n  let raw = (choice.message && choice.message.content) || '';\n  raw = raw.replace(/^\\s*\\`\\`\\`(?:json)?/i, '').replace(/\\`\\`\\`\\s*$/i, '').trim();\n  const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');\n  if (start >= 0 && end > start) raw = raw.slice(start, end + 1);\n  try { return JSON.parse(raw); } catch { throw new Error('INVALID_MODEL_JSON'); }\n};\nconst validate = (article, existingPosts) => {\n  const errors = [];\n  for (const key of required) if (!Object.hasOwn(article, key) || (typeof article[key] === 'string' && !article[key].trim())) errors.push('missing_' + key);\n  const titleLength = String(article.meta_title ?? '').trim().length;\n  const descriptionLength = String(article.meta_description ?? '').trim().length;\n  if (titleLength < 35 || titleLength > 60) errors.push('invalid_meta_title_length');\n  if (descriptionLength < 120 || descriptionLength > 155) errors.push('invalid_meta_description_length');\n  if (!Array.isArray(article.tags) || article.tags.length > 5) errors.push('invalid_tags');\n  if (!Array.isArray(article.faq) || article.faq.length < 3) errors.push('insufficient_faq');\n  const validSources = Array.isArray(article.fuentes) && article.fuentes.some(source => source && /^https:\\/\\//i.test(source.url ?? '') && source.titulo && source.fecha && source.medio);\n  if (!validSources) errors.push('invalid_sources');\n  if (!commercialUrls.some(url => String(article.content ?? '').includes(url))) errors.push('missing_commercial_link');\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+){2,5}$/.test(String(article.slug ?? ''))) errors.push('invalid_slug');\n  if (existingPosts.some(post => normalize(post.slug) === normalize(article.slug) || similarity(post.title, article.titulo) >= 0.70)) errors.push('duplicate_article');\n  return [...new Set(errors)];\n};\nconst article = parseResponse($json);\nconst existingPosts = $('Validar candidato').item.json.existingPosts ?? [];\nconst validationErrors = validate(article, existingPosts);\nif (validationErrors.length) throw new Error('ARTICLE_INVALID_AFTER_CORRECTION: ' + validationErrors.join(','));\nreturn [{ json: { article, needsCorrection: false, validationErrors: [] } }];"
+        "jsCode": "\nconst commercialUrls = [\n  'https://doble3d.cl/servicios/realidad-virtual/',\n  'https://doble3d.cl/servicios/animacion-3d/',\n  'https://doble3d.cl/servicios/core/',\n  'https://doble3d.cl/servicios/gamificacion-scorm/'\n];\nconst required = ['titulo','slug','meta_title','meta_description','focus_keyword','categoria','tags','fuentes','faq','excerpt','content','titulo_imagen','subtitulo_imagen','tag_top','tag_1','tag_2'];\nconst normalize = value => String(value ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');\nconst tokens = value => new Set(normalize(value).split('-').filter(Boolean));\nconst similarity = (left, right) => { const a=tokens(left), b=tokens(right); const both=[...a].filter(value=>b.has(value)).length; const all=new Set([...a,...b]).size; return all ? both/all : 0; };\nconst makeIdempotencyKey = (topic, slug) => {\n  const date = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());\n  return date + '|' + normalize(topic) + '|' + normalize(slug);\n};\nconst parseResponse = response => {\n  const choice = (response.choices && response.choices[0]) || {};\n  let raw = (choice.message && choice.message.content) || '';\n  raw = raw.replace(/^\\s*\\`\\`\\`(?:json)?/i, '').replace(/\\`\\`\\`\\s*$/i, '').trim();\n  const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');\n  if (start >= 0 && end > start) raw = raw.slice(start, end + 1);\n  try { return JSON.parse(raw); } catch { throw new Error('INVALID_MODEL_JSON'); }\n};\nconst validate = (article, existingPosts) => {\n  const errors = [];\n  for (const key of required) if (!Object.hasOwn(article, key) || (typeof article[key] === 'string' && !article[key].trim())) errors.push('missing_' + key);\n  const titleLength = String(article.meta_title ?? '').trim().length;\n  const descriptionLength = String(article.meta_description ?? '').trim().length;\n  if (titleLength < 35 || titleLength > 60) errors.push('invalid_meta_title_length');\n  if (descriptionLength < 120 || descriptionLength > 155) errors.push('invalid_meta_description_length');\n  if (!Array.isArray(article.tags) || article.tags.length > 5) errors.push('invalid_tags');\n  if (!Array.isArray(article.faq) || article.faq.length < 3) errors.push('insufficient_faq');\n  const validSources = Array.isArray(article.fuentes) && article.fuentes.some(source => source && /^https:\\/\\//i.test(source.url ?? '') && source.titulo && source.fecha && source.medio);\n  if (!validSources) errors.push('invalid_sources');\n  if (!commercialUrls.some(url => String(article.content ?? '').includes(url))) errors.push('missing_commercial_link');\n  if (!/^[a-z0-9]+(?:-[a-z0-9]+){2,5}$/.test(String(article.slug ?? ''))) errors.push('invalid_slug');\n  if (existingPosts.some(post => normalize(post.slug) === normalize(article.slug) || similarity(post.title, article.titulo) >= 0.70)) errors.push('duplicate_article');\n  return [...new Set(errors)];\n};\nconst article = parseResponse($json);\nconst existingPosts = $('Validar candidato').item.json.existingPosts ?? [];\nconst validationErrors = validate(article, existingPosts);\nif (validationErrors.length) throw new Error('ARTICLE_INVALID_AFTER_CORRECTION: ' + validationErrors.join(','));\nconst idempotencyKey = makeIdempotencyKey($('Validar candidato').item.json.topic, article.slug);\nreturn [{ json: { article, idempotencyKey, needsCorrection: false, validationErrors: [] } }];"
       }
     },
     {
@@ -457,6 +483,10 @@
               "value": "publish,draft,pending,private"
             },
             {
+              "name": "context",
+              "value": "edit"
+            },
+            {
               "name": "_fields",
               "value": "id,slug"
             }
@@ -465,7 +495,11 @@
         "options": {
           "timeout": 60000
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "notes": "Reintento acotado sólo para operación segura/idempotente. n8n aplica espera fija de 5 s."
     },
     {
       "id": "a1b2c3d4-0109-4000-8000-confirmslug1",
@@ -701,7 +735,8 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "timezone": "America/Santiago"
+    "timezone": "America/Santiago",
+    "errorWorkflow": "Doble3DErrorHandler1"
   },
   "active": false
 }

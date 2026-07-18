@@ -1,0 +1,52 @@
+{
+  "id": "Doble3DErrorHandler1",
+  "name": "Error Handler Doble3D Auto Post",
+  "nodes": [
+    {
+      "id": "error-trigger-0001",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [-320, 0],
+      "parameters": {}
+    },
+    {
+      "id": "format-error-0002",
+      "name": "Formatear error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-80, 0],
+      "parameters": {
+        "jsCode": "const source = $json ?? {};\nconst workflow = source.workflow ?? {};\nconst execution = source.execution ?? {};\nconst failure = execution.error ?? source.error ?? {};\nconst workflowName = String(workflow.name ?? 'Workflow desconocido').slice(0, 120);\nconst executionId = String(execution.id ?? 'sin-id').slice(0, 80);\nconst nodeName = String(execution.lastNodeExecuted ?? failure.node?.name ?? 'Nodo desconocido').slice(0, 120);\nconst errorType = String(failure.name ?? failure.type ?? 'Error').slice(0, 120);\nconst timestamp = new Date().toISOString();\nconst executionUrl = String(execution.url ?? '').slice(0, 500);\nconst subject = '[doble3d.cl] Falló Auto Post — ' + workflowName + ' — ' + executionId;\nconst body = [\n  'Workflow: ' + workflowName,\n  'Execution ID: ' + executionId,\n  'Nodo: ' + nodeName,\n  'Timestamp: ' + timestamp,\n  'Tipo de error: ' + errorType,\n  'URL de ejecución: ' + (executionUrl || 'no disponible'),\n].join('\\n');\nreturn [{ json: { subject, body, workflowName, executionId, nodeName, timestamp, errorType, executionUrl } }];"
+      }
+    },
+    {
+      "id": "send-email-0003",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [160, 0],
+      "parameters": {
+        "fromEmail": "n8n@doble3d.cl",
+        "toEmail": "dwolfft@doble3d.cl",
+        "subject": "={{ $json.subject }}",
+        "emailFormat": "text",
+        "text": "={{ $json.body }}",
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [[{"node": "Formatear error", "type": "main", "index": 0}]]
+    },
+    "Formatear error": {
+      "main": [[{"node": "Send Email", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Santiago"
+  },
+  "active": false
+}

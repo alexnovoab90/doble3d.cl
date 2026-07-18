@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import policy from '../workflow-policy.json' with { type: 'json' };
+import duplicatePosts from './fixtures/duplicate-posts.json' with { type: 'json' };
+import fixtureArticle from './fixtures/valid-article.json' with { type: 'json' };
 import { idempotencyKey, validateArticle, validateTopic } from '../lib/policy.mjs';
 
 const validArticle = (overrides = {}) => ({
@@ -51,3 +53,13 @@ test('builds a stable idempotency key', () => {
   );
 });
 
+test('fixtures simulate one accepted draft followed by a duplicate stop', () => {
+  assert.equal(validateArticle(fixtureArticle, [], policy).ok, true);
+  const secondRun = validateArticle(fixtureArticle, duplicatePosts, policy);
+  assert.equal(secondRun.ok, false);
+  assert.ok(secondRun.errors.includes('duplicate_article'));
+  assert.equal(
+    idempotencyKey('2026-07-21', 'Realidad virtual minería', fixtureArticle.slug),
+    idempotencyKey('2026-07-21', 'Realidad virtual minería', fixtureArticle.slug),
+  );
+});

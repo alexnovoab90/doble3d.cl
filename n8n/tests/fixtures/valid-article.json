@@ -1,0 +1,29 @@
+{
+  "titulo": "Realidad virtual para capacitación minera segura",
+  "slug": "realidad-virtual-capacitacion-minera",
+  "meta_title": "Realidad virtual para capacitación minera segura",
+  "meta_description": "La realidad virtual permite entrenar procedimientos críticos de minería en entornos seguros, medibles y sin detener equipos productivos.",
+  "focus_keyword": "realidad virtual minería chile",
+  "categoria": "realidad virtual",
+  "tags": ["VR", "Minería"],
+  "fuentes": [
+    {
+      "titulo": "Información pública de seguridad minera",
+      "url": "https://www.codelco.com/informacion-publica",
+      "fecha": "2026-07-01",
+      "medio": "Codelco"
+    }
+  ],
+  "faq": [
+    {"q": "¿Qué se entrena?", "a": "Procedimientos críticos en un entorno controlado."},
+    {"q": "¿Cómo se mide?", "a": "Con métricas de desempeño y cumplimiento."},
+    {"q": "¿Se integra al LMS?", "a": "Sí, mediante estándares de interoperabilidad."}
+  ],
+  "excerpt": "Entrenamiento minero inmersivo y medible.",
+  "content": "<p>Contenido validado.</p><a href=\"https://doble3d.cl/servicios/realidad-virtual/\">Realidad virtual industrial</a>",
+  "titulo_imagen": "Capacitación minera con realidad virtual",
+  "subtitulo_imagen": "Entrenamiento seguro y medible",
+  "tag_top": "CAPACITACIÓN INMERSIVA",
+  "tag_1": "MINERÍA",
+  "tag_2": "VR INDUSTRIAL"
+}
