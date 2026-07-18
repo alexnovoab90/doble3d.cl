@@ -1,0 +1,43 @@
+{
+  "pilotStatus": "draft",
+  "timezone": "America/Santiago",
+  "allowedTerms": [
+    "realidad virtual",
+    "vr",
+    "xr",
+    "realidad mixta",
+    "animación 3d",
+    "scorm",
+    "core",
+    "capacitación",
+    "minería",
+    "industrial",
+    "seguridad",
+    "gemelo digital"
+  ],
+  "blockedTerms": [
+    "iphone",
+    "ipad",
+    "macbook",
+    "switch 2",
+    "cirugía",
+    "gaming de consumo",
+    "precios de celulares"
+  ],
+  "commercialUrls": [
+    "https://doble3d.cl/servicios/realidad-virtual/",
+    "https://doble3d.cl/servicios/animacion-3d/",
+    "https://doble3d.cl/servicios/core/",
+    "https://doble3d.cl/servicios/gamificacion-scorm/"
+  ],
+  "limits": {
+    "titleMin": 35,
+    "titleMax": 60,
+    "descriptionMin": 120,
+    "descriptionMax": 155,
+    "tagsMax": 5,
+    "faqMin": 3,
+    "sourcesMin": 1,
+    "duplicateSimilarity": 0.7
+  }
+}
