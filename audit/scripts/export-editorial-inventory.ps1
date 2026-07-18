@@ -12,6 +12,8 @@ $posts = Invoke-RestMethod -Uri $api -MaximumRedirection 5
 
 $rows = foreach ($post in $posts) {
     $title = [string]$post.title.rendered
+    $sanitizedTitle = [Net.WebUtility]::HtmlDecode(($title -replace '<[^>]+>', ' '))
+    $sanitizedTitle = ($sanitizedTitle -replace '\s+', ' ').Trim()
     $content = [string]$post.content.rendered
     $plainText = (($content -replace '<[^>]+>', ' ') -replace '\s+', ' ').Trim()
     $wordCount = if ([string]::IsNullOrWhiteSpace($plainText)) { 0 } else { ($plainText -split '\s+').Count }
@@ -24,6 +26,7 @@ $rows = foreach ($post in $posts) {
         link            = $post.link
         title           = $title
         malformedTitle  = ($title -match '^\s*<')
+        sanitizedTitle  = $sanitizedTitle
         words           = $wordCount
         internalLinks   = ([regex]::Matches($content, 'href=["''](?:https://doble3d\.cl/|/)')).Count
         externalSources = ([regex]::Matches($content, 'href=["'']https?://(?!doble3d\.cl|wa\.me)')).Count
@@ -36,4 +39,3 @@ $rows | Export-Csv -Path $outputPath -NoTypeInformation -Encoding utf8
 $malformedCount = @($rows | Where-Object malformedTitle).Count
 Write-Output "Inventario guardado: $outputPath"
 Write-Output "Publicaciones: $($rows.Count); títulos con HTML: $malformedCount"
-
