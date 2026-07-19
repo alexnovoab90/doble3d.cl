@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const theme = path.join(repo, 'wordpress/theme/doble3d');
 const manifestPath = path.join(repo, 'wordpress/theme/doble3d.manifest.csv');
+const attributesPath = path.join(repo, '.gitattributes');
 
 async function walk(dir, prefix = '') {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -27,6 +28,11 @@ test('tracks the complete production theme snapshot', async () => {
   for (const required of ['style.css', 'functions.php', 'front-page.php', 'assets/js/landing.js']) {
     assert.ok(files.includes(required), `missing ${required}`);
   }
+});
+
+test('disables text conversion for the theme snapshot', async () => {
+  const lines = (await readFile(attributesPath, 'utf8')).trim().split(/\r?\n/);
+  assert.ok(lines.includes('wordpress/theme/doble3d/** -text'));
 });
 
 test('theme manifest matches every tracked byte', async () => {
