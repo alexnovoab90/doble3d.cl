@@ -9,6 +9,7 @@ const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const theme = path.join(repo, 'wordpress/theme/doble3d');
 const manifestPath = path.join(repo, 'wordpress/theme/doble3d.manifest.csv');
 const attributesPath = path.join(repo, '.gitattributes');
+const metadataMapPath = path.join(repo, 'wordpress/seo/metadata-map.csv');
 
 async function walk(dir, prefix = '') {
   const entries = await readdir(dir, { withFileTypes: true });
@@ -49,4 +50,15 @@ test('theme manifest matches every tracked byte', async () => {
     assert.equal((await stat(absolute)).size, Number(expectedBytes));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), expectedHash);
   }
+});
+
+test('home Yoast filters use the approved metadata map copy', async () => {
+  const functions = await readFile(path.join(theme, 'functions.php'), 'utf8');
+  const metadataMap = await readFile(metadataMapPath, 'utf8');
+  const expectedTitle = 'Doble 3D | Realidad Virtual y Animación 3D Industrial';
+  const expectedDescription = 'Soluciones de realidad virtual y animación 3D para minería e industria en Chile. Entrena procedimientos críticos sin detener la faena.';
+  assert.match(metadataMap, new RegExp(expectedTitle.replace(/[|]/g, '\\|')));
+  assert.match(metadataMap, new RegExp(expectedDescription.replace(/[.]/g, '\\.')));
+  assert.match(functions, new RegExp(`\\$d3d_home_seo_title\\s*=\\s*'${expectedTitle.replace(/[|]/g, '\\|')}'`));
+  assert.match(functions, new RegExp(`\\$d3d_home_seo_desc\\s*=\\s*'${expectedDescription.replace(/[.]/g, '\\.')}'`));
 });

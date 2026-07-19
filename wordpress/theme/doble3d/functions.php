@@ -435,8 +435,8 @@ add_filter('wpseo_schema_article', function ($data) {
  * Solo aplica a la front page; el resto del sitio lo maneja Yoast normalmente.
  */
 if (defined('WPSEO_VERSION')) {
-    $d3d_home_seo_title  = 'Doble 3D — Realidad Virtual y Animación 3D Industrial para Minería en Chile';
-    $d3d_home_seo_desc   = 'Doble 3D SpA: estudio chileno de realidad virtual, animación 3D y apps gamificadas SCORM. Simuladores VR para Codelco, Kinross, Barrick, BHP y operadoras tier-1. Santiago, Chile.';
+    $d3d_home_seo_title  = 'Doble 3D | Realidad Virtual y Animación 3D Industrial';
+    $d3d_home_seo_desc   = 'Soluciones de realidad virtual y animación 3D para minería e industria en Chile. Entrena procedimientos críticos sin detener la faena.';
     $d3d_home_og_title   = 'Doble 3D — Realidad Virtual y Animación 3D Industrial · Minería Chile';
     $d3d_home_og_desc    = 'Simuladores VR, videos técnicos 3D y apps SCORM para Codelco, Kinross, Barrick, BHP y operadoras tier-1. Doble 3D SpA, Santiago, Chile.';
 
