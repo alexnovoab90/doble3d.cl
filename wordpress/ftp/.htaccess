@@ -1,0 +1,148 @@
+
+RewriteOptions inherit
+
+Redirect 301 /d3d_post_junio2026.html https://doble3d.cl/xr-empresarial-pico-ar-ia-junio-2026/
+
+# BEGIN LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+<IfModule mod_rewrite.c>
+RewriteEngine on
+RewriteRule litespeed/debug/.*\.log$ - [F,L]
+RewriteRule \.litespeed_conf\.dat - [F,L]
+</IfModule>
+<IfModule LiteSpeed>
+CacheLookup on
+RewriteRule .* - [E=Cache-Control:no-autoflush]
+
+### marker ASYNC start ###
+RewriteCond %{REQUEST_URI} /wp-admin/admin-ajax\.php
+RewriteCond %{QUERY_STRING} action=async_litespeed
+RewriteRule .* - [E=noabort:1]
+### marker ASYNC end ###
+
+### marker DROPQS start ###
+CacheKeyModify -qs:fbclid
+CacheKeyModify -qs:gclid
+CacheKeyModify -qs:utm*
+CacheKeyModify -qs:_ga
+### marker DROPQS end ###
+
+</IfModule>
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END LSCACHE
+# BEGIN NON_LSCACHE
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+### marker BROWSER CACHE start ###
+<IfModule mod_expires.c>
+ExpiresActive on
+ExpiresByType application/pdf A31557600
+ExpiresByType image/x-icon A31557600
+ExpiresByType image/vnd.microsoft.icon A31557600
+ExpiresByType image/svg+xml A31557600
+
+ExpiresByType image/jpg A31557600
+ExpiresByType image/jpeg A31557600
+ExpiresByType image/png A31557600
+ExpiresByType image/gif A31557600
+ExpiresByType image/webp A31557600
+ExpiresByType image/avif A31557600
+
+ExpiresByType video/ogg A31557600
+ExpiresByType audio/ogg A31557600
+ExpiresByType video/mp4 A31557600
+ExpiresByType video/webm A31557600
+
+ExpiresByType text/css A31557600
+ExpiresByType text/javascript A31557600
+ExpiresByType application/javascript A31557600
+ExpiresByType application/x-javascript A31557600
+
+ExpiresByType application/x-font-ttf A31557600
+ExpiresByType application/x-font-woff A31557600
+ExpiresByType application/font-woff A31557600
+ExpiresByType application/font-woff2 A31557600
+ExpiresByType application/vnd.ms-fontobject A31557600
+ExpiresByType font/ttf A31557600
+ExpiresByType font/otf A31557600
+ExpiresByType font/woff A31557600
+ExpiresByType font/woff2 A31557600
+
+</IfModule>
+### marker BROWSER CACHE end ###
+
+## LITESPEED WP CACHE PLUGIN - Do not edit the contents of this block! ##
+# END NON_LSCACHE
+
+# BEGIN WordPress
+# Las directivas (líneas) entre "BEGIN WordPress" y "END WordPress" son
+# generados dinámicamente, y sólo deben ser modificados a través de los filtros de WordPress.
+# Cualquier cambio en las directivas entre estos marcadores se sobrescribirá.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+
+# END WordPress
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-SSL} !on
+RewriteCond %{HTTP_HOST} ^www\.doble3d\.cl$
+RewriteRule ^/?$ "https\:\/\/doble3d\.cl\/" [R=301,L]
+
+SetEnvIf Request_URI ^/ian-asistente-virtual/?$ IS_IAN_PAGE
+ Header set Permissions-Policy "microphone=(self)" env=IS_IAN_PAGE
+
+# BEGIN LiteSpeed
+# Las directivas (líneas) entre «BEGIN LiteSpeed» y «END LiteSpeed» son
+# generadas dinámicamente y solo deberían ser modificadas mediante filtros de WordPress.
+# Cualquier cambio en las directivas que hay entre esos marcadores serán sobrescritas.
+<IfModule Litespeed>
+	SetEnv noabort 1
+</IfModule>
+# END LiteSpeed
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php8_module>
+
+</IfModule>
+<IfModule lsapi_module>
+
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “alt-php83” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-alt-php83 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+
+
+
+# BEGIN Headers Security Advanced & HSTS WP 5.3.3
+<IfModule mod_headers.c>
+Header set Access-Control-Allow-Methods "GET,POST"
+Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+Header set Content-Security-Policy "upgrade-insecure-requests;"
+Header set Content-Security-Policy-Report-Only " report-to doble3d.cl; report-uri doble3d.cl;"
+Header set Cross-Origin-Embedder-Policy "unsafe-none; report-to='default'"
+Header set Cross-Origin-Embedder-Policy-Report-Only "unsafe-none; report-to='default'"
+Header set Cross-Origin-Opener-Policy "unsafe-none"
+Header set Cross-Origin-Opener-Policy-Report-Only "unsafe-none; report-to='default'"
+Header set Cross-Origin-Resource-Policy "cross-origin"
+Header set Permissions-Policy "accelerometer=(), autoplay=(), camera=(), cross-origin-isolated=(), display-capture=(self), encrypted-media=(), fullscreen=*, geolocation=(self), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), payment=*, picture-in-picture=*, publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=*, usb=(), xr-spatial-tracking=(), gamepad=(), serial=()"
+Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+Header set X-Content-Security-Policy "default-src 'self'; img-src *; media-src * data:;"
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "SAMEORIGIN"
+Header set X-Permitted-Cross-Domain-Policies "none"
+</IfModule>
+# END Headers Security Advanced & HSTS WP
