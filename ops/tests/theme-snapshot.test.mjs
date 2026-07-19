@@ -33,6 +33,9 @@ test('theme manifest matches every tracked byte', async () => {
   const lines = (await readFile(manifestPath, 'utf8')).trim().split(/\r?\n/);
   assert.equal(lines.shift(), 'path,bytes,sha256');
   assert.equal(lines.length, 36);
+  const manifestPaths = lines.map((line) => line.split(',')[0]);
+  assert.equal(new Set(manifestPaths).size, manifestPaths.length);
+  assert.deepEqual(manifestPaths, await walk(theme));
   for (const line of lines) {
     const [relative, expectedBytes, expectedHash] = line.split(',');
     const absolute = path.join(theme, ...relative.split('/'));
