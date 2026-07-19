@@ -1,0 +1,15 @@
+/*
+Theme Name: Doble 3D
+Theme URI: https://doble3d.cl
+Author: Doble 3D SpA
+Author URI: https://doble3d.cl
+Description: Theme propio para doble3d.cl — landing único, sin Salient, optimizado para SEO y entregabilidad de leads vía wp_mail().
+Version: 1.0.0
+Requires at least: 6.0
+Tested up to: 6.7
+Requires PHP: 7.4
+License: Proprietary
+Text Domain: doble3d
+*/
+
+/* El CSS real del landing vive inline en front-page.php (critical path, font preload + display:swap). Este archivo solo cumple el requisito formal de WP. */
