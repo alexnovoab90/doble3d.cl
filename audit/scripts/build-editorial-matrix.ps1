@@ -2,10 +2,13 @@
 param(
     [Parameter(Mandatory)]
     [string]$InventoryCsv,
-    [string]$OutputDir = (Join-Path $PSScriptRoot '..\editorial')
+    [string]$OutputDir
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $OutputDir = Join-Path $PSScriptRoot '..\editorial'
+}
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 $posts = Import-Csv -LiteralPath $InventoryCsv
 $allowed = 'realidad virtual|\bvr\b|\bxr\b|realidad mixta|animaci[oó]n 3d|scorm|\bcore\b|capacitaci[oó]n|minería|mineria|industrial|seguridad|gemelo digital|webgl|inteligencia artificial'
@@ -70,4 +73,3 @@ $posts | Where-Object malformedTitle -eq 'True' |
 Write-Output "Matriz: $matrixPath ($($matrix.Count) posts)"
 Write-Output "Títulos a revisar: $(@($posts | Where-Object malformedTitle -eq 'True').Count)"
 Write-Output 'Métricas no disponibles: no se asignaron decisiones retire.'
-

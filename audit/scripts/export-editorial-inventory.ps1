@@ -1,9 +1,12 @@
 [CmdletBinding()]
 param(
-    [string]$OutputDir = (Join-Path $PSScriptRoot '..\baseline')
+    [string]$OutputDir
 )
 
 $ErrorActionPreference = 'Stop'
+if ([string]::IsNullOrWhiteSpace($OutputDir)) {
+    $OutputDir = Join-Path $PSScriptRoot '..\baseline'
+}
 New-Item -ItemType Directory -Force -Path $OutputDir | Out-Null
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $outputPath = Join-Path $OutputDir "posts-$stamp.csv"
