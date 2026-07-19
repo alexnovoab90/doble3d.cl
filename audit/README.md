@@ -31,6 +31,6 @@ Antes de cualquier escritura remota deben existir y validarse:
 - export SQL completo de la base de datos WordPress;
 - `MANIFEST.md` con archivos no vacíos y hashes SHA-256.
 
-El respaldo de archivos del 18 de julio de 2026 contiene 39 archivos (605.863 bytes). El export SQL todavía no está disponible: por este motivo **toda escritura remota permanece bloqueada**.
+El respaldo de archivos del 18 de julio de 2026 contiene 39 archivos (605.863 bytes). El export SQL completo y validado ocupa 6.990.049 bytes, contiene 42 tablas y las 10 tablas esenciales de WordPress; permanece ignorado y fuera de Git. Antes de cada lote remoto todavía se debe crear y validar su captura puntual de rollback según `ops/sql-rollback-runbook.md`.
 
 No se deben guardar contraseñas, claves de aplicación ni cookies en esta carpeta o en Git.

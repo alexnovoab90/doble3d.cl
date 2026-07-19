@@ -10,10 +10,10 @@ Fecha de evaluación: 2026-07-18
 - Suite local completa en verde.
 - Servicio n8n persistente y saludable, con cero workflows activos.
 - Matriz editorial, metadatos, hardening FTP y tres artículos pilares preparados localmente.
+- Export SQL completo y validado, ignorado por Git, con runbook de rollback puntual por lote.
 
 ## Condiciones aún no cumplidas
 
-- Falta un export SQL completo y validado de WordPress.
 - Las correcciones remotas de metadatos, títulos y artefactos no se han aplicado.
 - Los tres pilares no existen aún como borradores revisados en WordPress.
 - El manejador de errores no está importado/configurado con SMTP.
@@ -28,4 +28,3 @@ Cuando el piloto termine, la aprobación debe incluir cuatro filas aceptables en
 ## Rollback automático
 
 Cualquier duplicado, tema fuera de nicho, fuente ausente, metadato inválido o error terminal no manejado obliga a volver a `draft` antes de la siguiente programación y reinicia una nueva ventana de cuatro borradores.
-

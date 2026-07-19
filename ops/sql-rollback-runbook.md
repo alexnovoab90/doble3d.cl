@@ -6,7 +6,7 @@ El dump completo está en `audit/backups/20260718-181139/database/ddcl_wp950-bef
 
 ## Rollback puntual por lote
 
-Antes de cada escritura REST se guarda en `audit/baseline/wordpress-rollback/<fecha-utc>/` un JSON con ID, URL, slug, estado, título y metadatos SEO actuales. La reversión envía únicamente esos valores previos al mismo recurso. Después se comprueba HTTP 200, URL sin cambios y HTML público.
+Antes de cada escritura REST se guarda en `audit/baseline/wordpress-rollback/<fecha-utc>/` un JSON con ID, URL, slug, estado, título y metadatos SEO actuales. Cada captura debe registrar también el hash SHA-256 del dump base usado como barrera de recuperación. La reversión envía únicamente esos valores previos al mismo recurso. Después se comprueba HTTP 200, URL sin cambios y HTML público.
 
 ## Restauración completa de emergencia
 

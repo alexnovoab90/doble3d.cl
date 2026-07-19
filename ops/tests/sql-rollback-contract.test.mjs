@@ -25,3 +25,21 @@ test('documents row-level rollback before full restore', async () => {
   assert.match(runbook, /staging/i);
   assert.match(runbook, /no debe agregarse a Git/i);
 });
+
+test('requires every batch rollback capture to record the base dump hash', async () => {
+  const runbook = await readFile(path.join(repo, 'ops/sql-rollback-runbook.md'), 'utf8');
+  const rowLevelSection = runbook.slice(
+    runbook.indexOf('Rollback puntual por lote'),
+    runbook.indexOf('Restauración completa de emergencia'),
+  );
+  assert.match(rowLevelSection, /cada captura[^.]*hash SHA-256 del dump base/i);
+});
+
+test('operational docs acknowledge the validated SQL backup', async () => {
+  const auditReadme = await readFile(path.join(repo, 'audit/README.md'), 'utf8');
+  const activationDecision = await readFile(path.join(repo, 'ops/activation-decision.md'), 'utf8');
+  assert.doesNotMatch(auditReadme, /export SQL todavía no está disponible/i);
+  assert.doesNotMatch(activationDecision, /Falta un export SQL completo/i);
+  assert.match(auditReadme, /6\.990\.049 bytes/i);
+  assert.match(activationDecision, /export SQL completo y validado/i);
+});
