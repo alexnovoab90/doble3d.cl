@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home50/ddcl/deploy-staging/doble3d-theme/
+    - /bin/mkdir -p "$DEPLOYPATH"
+    - /bin/cp -a wordpress/theme/doble3d/. "$DEPLOYPATH"
